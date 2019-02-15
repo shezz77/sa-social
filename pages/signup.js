@@ -1,26 +1,163 @@
-// import Typography from "@material-ui/core/Typography";
-// import Avatar from "@material-ui/core/Avatar";
-// import FormControl from "@material-ui/core/FormControl";
-// import Paper from "@material-ui/core/Paper";
-// import Input from "@material-ui/core/Input";
-// import InputLabel from "@material-ui/core/InputLabel";
-// import Button from "@material-ui/core/Button";
-// import Snackbar from "@material-ui/core/Snackbar";
-// import Dialog from "@material-ui/core/Dialog";
-// import DialogActions from "@material-ui/core/DialogActions";
-// import DialogContent from "@material-ui/core/DialogContent";
-// import DialogContentText from "@material-ui/core/DialogContentText";
-// import DialogTitle from "@material-ui/core/DialogTitle";
-// import Slide from "@material-ui/core/Slide";
-// import Gavel from "@material-ui/icons/Gavel";
-// import VerifiedUserTwoTone from "@material-ui/icons/VerifiedUserTwoTone";
+import Typography from "@material-ui/core/Typography";
+import Avatar from "@material-ui/core/Avatar";
+import FormControl from "@material-ui/core/FormControl";
+import Paper from "@material-ui/core/Paper";
+import Input from "@material-ui/core/Input";
+import InputLabel from "@material-ui/core/InputLabel";
+import Button from "@material-ui/core/Button";
+import Snackbar from "@material-ui/core/Snackbar";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import Slide from "@material-ui/core/Slide";
+import Gavel from "@material-ui/icons/Gavel";
+import VerifiedUserTwoTone from "@material-ui/icons/VerifiedUserTwoTone";
 import withStyles from "@material-ui/core/styles/withStyles";
 
+import {signupUser} from './../lib/auth';
+import Link from 'next/link'
+
+function Transition (props) {
+  return <Slide direction="up" {...props}/>
+};
+
 class Signup extends React.Component {
-  state = {};
+  state = {
+    name: '',
+    email: '',
+    password: '',
+    error: '',
+    openError: false,
+    createdUser: '',
+    openSuccess: false,
+    isLoading: false
+  };
+
+  handleChange = e => {
+    this.setState({[e.target.name]: e.target.value});
+  };
+
+  handleSubmit = e => {
+    e.preventDefault();
+    const {name, email, password} = this.state;
+
+    const user = {name, email, password};
+    this.setState({ isLoading: true, error: ""});
+
+    signupUser(user)
+        .then(createdUser => {
+          this.setState({
+            createdUser,
+            error: "",
+            isLoading: false,
+            openSuccess: true
+          })
+        })
+        .catch(this.showError)
+  };
+
+  handleClose = () => this.setState({openError: false});
+
+  showError = err => {
+    const error = err.response && err.response.data || err.message;
+    this.setState({error, openError: true, isLoading: false});
+  };
 
   render() {
-    return <div>Signup</div>;
+    const {classes} = this.props;
+    const {error, openError, openSuccess, createdUser, isLoading} = this.state;
+
+    return (
+      <div className={classes.root}>
+        <Paper className={classes.paper}>
+          <Avatar className={classes.avatar}>
+            <Gavel/>
+          </Avatar>
+          <Typography variant="h5" component="h1">
+            Sign up
+          </Typography>
+
+          <form onSubmit={this.handleSubmit} className={classes.form}>
+            <FormControl margin="normal" required fullWidth>
+              <InputLabel htmlFor="name">Name</InputLabel>
+              <Input
+                name="name"
+                type="text"
+                onChange={this.handleChange}
+              />
+            </FormControl>
+
+            <FormControl margin="normal" required fullWidth>
+              <InputLabel htmlFor="name">Email</InputLabel>
+              <Input
+                  name="email"
+                  type="email"
+                  onChange={this.handleChange}
+              />
+            </FormControl>
+
+            <FormControl margin="normal" required fullWidth>
+              <InputLabel htmlFor="name">Password</InputLabel>
+              <Input
+                  name="password"
+                  type="password"
+                  onChange={this.handleChange}
+              />
+            </FormControl>
+
+            <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                className={classes.submit}
+                disabled={isLoading}
+            >{isLoading ? "Signing up...." : "Sign up" }</Button>
+          </form>
+
+          {/*Error Snackbar*/}
+          {error && (
+              <Snackbar
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right'
+                  }}
+                  open={openError}
+                  onClose={this.handleClose}
+                  autoHideDuration={6000}
+                  message={<span className={classes.snack}>{error}</span>}
+              />
+          )}
+
+        </Paper>
+        
+        {/*Success Dialogue*/}
+        <Dialog
+            open={openSuccess}
+            disableBackdropClick={true}
+            transitionComponent={Transition}
+        >
+          <DialogTitle>
+            <VerifiedUserTwoTone className={classes.icon}/>
+            New Account
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+            User {createdUser} successfully created!
+            </DialogContentText>
+            <DialogActions>
+              <Button color="primary" variant="contained">
+                <Link href="/signin">
+                  <a className={classes.signinLink}>Sign In</a>
+                </Link>
+              </Button>
+            </DialogActions>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
   }
 }
 
